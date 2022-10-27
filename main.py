@@ -49,8 +49,17 @@ def flip_card():
     my_can.itemconfig(card_image, image=my_image_back)
     my_can.itemconfig(french, text='English', fill='white')
     my_can.itemconfig(word, text=words['English'], fill='white')
-    to_learn.append(words)
+    if words not in to_learn:
+        to_learn.append(words)
     print(to_learn)
+
+
+def add_to_learn():
+    global words, to_learn, word_timer
+    window.after_cancel(word_timer)
+    if words not in to_learn:
+        to_learn.append(words)
+    next_card()
 
 
 def bcorrect():
@@ -93,7 +102,7 @@ button_corr = Button(image=my_image_corr, highlightthickness=0, padx=50, pady=50
 button_corr.grid(row=1, column=1)
 
 # Wrong button
-button_wro = Button(image=my_image_wro, highlightthickness=0, padx=50, pady=50, command=next_card)
+button_wro = Button(image=my_image_wro, highlightthickness=0, padx=50, pady=50, command=add_to_learn)
 button_wro.grid(row=1, column=0)
 ##################################
 
