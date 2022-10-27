@@ -2,25 +2,46 @@ from tkinter import *
 import pandas
 from random import randint
 
+wordset = {}
+randindex = 0
 words = {}
+to_learn = []
 
 
 # Get data
 def get_data():
-    data = pandas.read_csv('/Users/joachimlehmann/PycharmProjects/FlashCards/data/french_words.csv')
-
+    global wordset, randindex, fr_dict
+    try:
+        data = pandas.read_csv('data/words_to_learn.csv')
+    except FileNotFoundError:
+        data = pandas.read_csv('data/french_words.csv')
     fr_dict = data.to_dict(orient='records')
-    wordset = fr_dict[randint(0, 99)]
+    return fr_dict
+
+
+def select_wordset():
+    global randindex, wordset
+    randindex = randint(0, len(fr_dict) - 1)
+    wordset = fr_dict[randindex]
     return wordset
 
 
 def next_card():
-    global words
-    my_can.itemconfig(card_image, image=my_image_front)
-    words = get_data()
-    my_can.itemconfig(french, text='French', fill='black')
-    my_can.itemconfig(word, text=words['French'], fill='black')
-    window.after(3000, flip_card)
+    global words, word_timer
+    word_timer = window.after(3000, flip_card)
+    if len(fr_dict) > 0:
+        words = select_wordset()
+        my_can.itemconfig(card_image, image=my_image_front)
+        my_can.itemconfig(french, text='French', fill='black')
+        my_can.itemconfig(word, text=words['French'], fill='black')
+    else:
+        my_can.itemconfig(card_image, image=my_image_front)
+        my_can.itemconfig(french, text='Done!', fill='black')
+        my_can.itemconfig(word, text='fin!', fill='black')
+        with open(file='data/words_to_learn.csv', mode='w') as outputfile:
+            outputfile.writelines("French,English\n")
+            for i in to_learn:
+                outputfile.writelines(f'{i["French"]},{i["English"]}\n')
 
 
 def flip_card():
@@ -28,6 +49,17 @@ def flip_card():
     my_can.itemconfig(card_image, image=my_image_back)
     my_can.itemconfig(french, text='English', fill='white')
     my_can.itemconfig(word, text=words['English'], fill='white')
+    to_learn.append(words)
+    print(to_learn)
+
+
+def bcorrect():
+    global word_timer
+    window.after_cancel(word_timer)
+    print(len(fr_dict))
+    if len(fr_dict) > 0:
+        fr_dict.remove(fr_dict[randindex])
+        next_card()
 
 
 ##########################
@@ -57,7 +89,7 @@ my_can.grid(row=0, column=0, columnspan=2)
 # Buttons
 
 # Correct button
-button_corr = Button(image=my_image_corr, highlightthickness=0, padx=50, pady=50, command=next_card)
+button_corr = Button(image=my_image_corr, highlightthickness=0, padx=50, pady=50, command=bcorrect)
 button_corr.grid(row=1, column=1)
 
 # Wrong button
@@ -70,6 +102,7 @@ french = my_can.create_text(400, 150, text='French', font=('Arial', 40, 'italic'
 word = my_can.create_text(400, 263, text='Test', font=('Arial', 60, 'bold'))
 ##################################
 
+fr_dict = get_data()
 
 next_card()
 
